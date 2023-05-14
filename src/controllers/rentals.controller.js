@@ -26,7 +26,7 @@ export async function postRental(req, res) {
     const { customerId, gameId, daysRented } = req.body;
 
     try {
-        if (!daysRented > 0) return res.status(400).send("Days rented should be greater than 0");
+        if (daysRented <= 0) return res.status(400).send("Days rented should be greater than 0");
 
         const customerExists = await db.query(`SELECT * FROM customers WHERE id=$1`, [customerId]);
         if (!customerExists.rows[0]) return res.status(400).send("Customer does not exist");
