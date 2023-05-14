@@ -59,27 +59,28 @@ export async function postRental(req, res) {
     }
 }
 
-export async function closeRental(req, res){
-    const {id} = req.params;
+export async function closeRental(req, res) {
+    const { id } = req.params;
 
     try {
-        const rentalExists = await db.query(`SELECT * FROM rentals WHERE id=$1`,[id]);
+        const rentalExists = await db.query(`SELECT * FROM rentals WHERE id=$1`, [id]);
 
-        if(!rentalExists.rows[0]) 
+        if (!rentalExists.rows[0])
             return res.status(404).send("Rental not found");
-        else if(rentalExists.rows[0].returnDate !== null)
+        else if (rentalExists.rows[0].returnDate !== null)
             return res.status(400).send("Rental already returned");
-        
+
         const now = dayjs();
-        const {pricePerDay,daysRented,rentDate} = rentalExists.rows[0];
-        const lateDays = now.diff(rentDate,"days") - daysRented;
-        const delayFee = lateDays > 0 ? (pricePerDay * lateDays) : null;
+        const { daysRented, rentDate, originalPrice } = rentalExists.rows[0];
+        const lateDays = now.diff(rentDate, "days") - daysRented;
+        const pricePerDay = originalPrice/daysRented;
+        const delayFee = lateDays > 0 ? pricePerDay * lateDays : null;
 
         await db.query(`
             UPDATE rentals 
             SET "returnDate"=$1, "delayFee"=$2
             WHERE id=$3
-        `,[now.format("YYYY-MM-DD"),delayFee, id]);
+        `, [now.format("YYYY-MM-DD"), delayFee, id]);
 
         res.sendStatus(200);
     } catch (error) {
