@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { db } from "../database/database.connection.js";
 
 export async function getRentals(req, res) {
-    const { customerId, gameId, limit, offset } = req.query;
+    const { customerId, gameId, limit, offset, order, desc } = req.query;
     try {
         let rentals = {};
         if (customerId || gameId) {
@@ -29,15 +29,28 @@ export async function getRentals(req, res) {
                 rentals = { ...queryResult };
             }
         } else {
-            const queryResult = await db.query(`
-                SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
-                FROM rentals
-                JOIN customers ON customers.id = rentals."customerId"
-                JOIN games ON games.id = rentals."gameId"
-                LIMIT $1 OFFSET $2;
-            `, [limit, offset]);
-            rentals = { ...queryResult };
+            if (order) {
+                const queryResult = await db.query(`
+                    SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
+                    FROM rentals
+                    JOIN customers ON customers.id = rentals."customerId"
+                    JOIN games ON games.id = rentals."gameId"
+                    ORDER BY ${order} ${desc ? "DESC" : "ASC"}
+                    LIMIT $1 OFFSET $2;
+                `, [limit, offset]);
+                rentals = { ...queryResult };
+            } else {
+                const queryResult = await db.query(`
+                    SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
+                    FROM rentals
+                    JOIN customers ON customers.id = rentals."customerId"
+                    JOIN games ON games.id = rentals."gameId"
+                    LIMIT $1 OFFSET $2;
+                `, [limit, offset]);
+                rentals = { ...queryResult };
+            }
         }
+
         const result = rentals.rows.map((r) => {
             const customer = { id: r.customerId, name: r.customerName };
             const game = { id: r.gameId, name: r.gameName };
