@@ -2,28 +2,30 @@ import dayjs from "dayjs";
 import { db } from "../database/database.connection.js";
 
 export async function getRentals(req, res) {
-    const { customerId, gameId } = req.query;
+    const { customerId, gameId, limit, offset } = req.query;
     try {
         let rentals = {};
         if (customerId || gameId) {
-            if(customerId){
+            if (customerId) {
                 const queryResult = await db.query(`
                     SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
                     FROM rentals
                     JOIN customers ON customers.id = rentals."customerId"
                     JOIN games ON games.id = rentals."gameId"
-                    WHERE "customerId"=$1;
-                `, [customerId]);
+                    WHERE "customerId"=$1
+                    LIMIT $2 OFFSET $3;;
+                `, [customerId, limit, offset]);
                 rentals = { ...queryResult };
             }
-            if(gameId){
+            if (gameId) {
                 const queryResult = await db.query(`
                     SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
                     FROM rentals
                     JOIN customers ON customers.id = rentals."customerId"
                     JOIN games ON games.id = rentals."gameId"
-                    WHERE "gameId"=$1;
-                `, [gameId]);
+                    WHERE "gameId"=$1
+                    LIMIT $2 OFFSET $3;
+                `, [gameId, limit, offset]);
                 rentals = { ...queryResult };
             }
         } else {
@@ -31,9 +33,10 @@ export async function getRentals(req, res) {
                 SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
                 FROM rentals
                 JOIN customers ON customers.id = rentals."customerId"
-                JOIN games ON games.id = rentals."gameId";
-            `);
-            rentals = {...queryResult};
+                JOIN games ON games.id = rentals."gameId"
+                LIMIT $1 OFFSET $2;
+            `, [limit, offset]);
+            rentals = { ...queryResult };
         }
         const result = rentals.rows.map((r) => {
             const customer = { id: r.customerId, name: r.customerName };

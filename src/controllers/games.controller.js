@@ -1,12 +1,12 @@
 import { db } from "../database/database.connection.js";
 
 export async function getGames(req, res) {
-    const { name } = req.query;
+    const { name, offset,limit } = req.query;
     
     try {
         const games = name 
             ? await db.query(`SELECT * FROM games WHERE LOWER(name) LIKE $1`, [`${name.toLowerCase()}%`])
-            : await db.query(`SELECT * FROM games`);
+            : await db.query(`SELECT * FROM games LIMIT $1 OFFSET $2`, [limit,offset]);
         res.send(games.rows);
     } catch (error) {
         res.status(500).send(error.message);
