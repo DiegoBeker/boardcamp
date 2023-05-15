@@ -28,7 +28,7 @@ export async function getCustomers(req, res) {
                 : await db.query(`
                     SELECT * 
                     FROM customers
-                    ORDER BY ${order} ${desc ? "DESC" : "ASC"}
+                    ORDER BY "${order}" ${desc ? "DESC" : "ASC"}
                     LIMIT $1 OFFSET $2;
             `, [limit, offset]);
             customers = { ...customersQuery }

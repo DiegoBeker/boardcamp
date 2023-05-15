@@ -35,7 +35,7 @@ export async function getRentals(req, res) {
                     FROM rentals
                     JOIN customers ON customers.id = rentals."customerId"
                     JOIN games ON games.id = rentals."gameId"
-                    ORDER BY ${order} ${desc ? "DESC" : "ASC"}
+                    ORDER BY "${order}" ${desc ? "DESC" : "ASC"}
                     LIMIT $1 OFFSET $2;
                 `, [limit, offset]);
                 rentals = { ...queryResult };

@@ -8,7 +8,7 @@ export async function getGames(req, res) {
             const games = await db.query(`
                 SELECT * 
                 FROM games 
-                ORDER BY ${order} ${desc ? "DESC" : "ASC"}
+                ORDER BY "${order}" ${desc ? "DESC" : "ASC"}
                 LIMIT $1 OFFSET $2
             `, [limit,offset]);
             return res.send(games.rows);
