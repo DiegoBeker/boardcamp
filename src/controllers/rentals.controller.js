@@ -2,13 +2,39 @@ import dayjs from "dayjs";
 import { db } from "../database/database.connection.js";
 
 export async function getRentals(req, res) {
+    const { customerId, gameId } = req.query;
     try {
-        const rentals = await db.query(`
-            SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
-            FROM rentals
-            JOIN customers ON customers.id = rentals."customerId"
-            JOIN games ON games.id = rentals."gameId";
-        `);
+        let rentals = {};
+        if (customerId || gameId) {
+            if(customerId){
+                const queryResult = await db.query(`
+                    SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
+                    FROM rentals
+                    JOIN customers ON customers.id = rentals."customerId"
+                    JOIN games ON games.id = rentals."gameId"
+                    WHERE "customerId"=$1;
+                `, [customerId]);
+                rentals = { ...queryResult };
+            }
+            if(gameId){
+                const queryResult = await db.query(`
+                    SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
+                    FROM rentals
+                    JOIN customers ON customers.id = rentals."customerId"
+                    JOIN games ON games.id = rentals."gameId"
+                    WHERE "gameId"=$1;
+                `, [gameId]);
+                rentals = { ...queryResult };
+            }
+        } else {
+            const queryResult = await db.query(`
+                SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName"
+                FROM rentals
+                JOIN customers ON customers.id = rentals."customerId"
+                JOIN games ON games.id = rentals."gameId";
+            `);
+            rentals = {...queryResult};
+        }
         const result = rentals.rows.map((r) => {
             const customer = { id: r.customerId, name: r.customerName };
             const game = { id: r.gameId, name: r.gameName };
@@ -97,12 +123,12 @@ export async function deleteRental(req, res) {
             return res.status(404).send("Rental not found");
         else if (rentalExists.rows[0].returnDate === null)
             return res.status(400).send("Rental is currently open");
-        
-            await db.query(`
+
+        await db.query(`
                 DELETE FROM rentals
                 WHERE id=$1
-            `,[id]);
-            res.sendStatus(200);
+            `, [id]);
+        res.sendStatus(200);
     } catch (error) {
         res.status(500).send(error.message);
     }

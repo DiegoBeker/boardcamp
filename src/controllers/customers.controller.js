@@ -19,12 +19,15 @@ export async function postCustomer(req, res) {
 }
 
 export async function getCustomers(req, res) {
+    const { cpf } = req.query;
     try {
-        const customers = await db.query(`SELECT * FROM customers`);
+        const customers = cpf
+            ? await db.query(`SELECT * FROM customers WHERE cpf LIKE $1`,[`${cpf}%`] )   
+            : await db.query(`SELECT * FROM customers`);
 
         const result = customers.rows.map((c) => {
             const birthday = dayjs(c.birthday).format("YYYY-MM-DD");
-            return {...c, birthday};
+            return { ...c, birthday };
         });
         res.send(result);
     } catch (error) {
@@ -39,7 +42,7 @@ export async function getCustomerById(req, res) {
 
         if (!customer.rows[0]) res.sendStatus(404);
 
-        const result = {...customer.rows[0], birthday:dayjs(customer.rows[0].birthday).format("YYYY-MM-DD")}
+        const result = { ...customer.rows[0], birthday: dayjs(customer.rows[0].birthday).format("YYYY-MM-DD") }
 
         res.send(result);
     } catch (error) {
@@ -52,7 +55,7 @@ export async function updateCustomer(req, res) {
     const { id } = req.params;
     try {
         const cpfExists = await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf]);
-        
+
         if (cpfExists.rows[0] && cpfExists.rows[0].id != id) return res.sendStatus(409);
 
         await db.query(`
