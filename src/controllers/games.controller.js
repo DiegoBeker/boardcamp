@@ -16,11 +16,7 @@ export async function getGames(req, res) {
 
         const games = name 
             ? await db.query(`SELECT * FROM games WHERE LOWER(name) LIKE $1`, [`${name.toLowerCase()}%`])
-            : await db.query(`
-                SELECT * 
-                FROM games
-                LIMIT $1 OFFSET $2
-            `, [limit,offset]);
+            : await db.query(`SELECT * FROM games LIMIT $1 OFFSET $2`, [limit,offset]);
 
         res.send(games.rows);
     } catch (error) {
@@ -30,9 +26,6 @@ export async function getGames(req, res) {
 
 export async function postGame(req, res) {
     const { name, image, stockTotal, pricePerDay } = req.body;
-
-    const nameExists = await db.query(`SELECT * FROM games WHERE name=$1`, [name]);
-    if (nameExists.rows[0]) return res.status(409).send("Game already exists");
 
     await db.query(`
         INSERT INTO games (name, image, "stockTotal", "pricePerDay")
